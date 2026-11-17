@@ -1,0 +1,110 @@
+name: Release
+
+# Release tags are vSCHEMA.UPSTREAMTAG.REV, e.g. v2.20261110.0:
+#   major = upstream schemaVersion (bumps only on breaking field changes)
+#   minor = upstream data tag (YYYYMMDD)
+#   patch = repackaging revision of the same upstream snapshot
+# Consumers can pin a major version to stay schema-compatible.
+
+on:
+  # Every push to main computes v<schema>.<upstream>.0 from archive.lock.json
+  # and releases it if that tag does not exist yet, so merging a sync PR
+  # releases automatically and other merges are no-ops.
+  push:
+    branches: [main]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-device-db
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish data tarball
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Determine release version
+        id: version
+        run: |
+          schema=$(jq -r .schemaVersion archive.lock.json)
+          upstream=$(jq -r .tag archive.lock.json)
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag="$GITHUB_REF_NAME"
+            IFS=. read -r major minor _ <<< "${tag#v}"
+            if [ "$major" != "$schema" ] || [ "$minor" != "$upstream" ]; then
+              echo "::error::tag $tag does not match lock (schema $schema, upstream $upstream); expected v$schema.$upstream.N"
+              exit 1
+            fi
+          else
+            tag="v$schema.$upstream.0"
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "$tag already exists; push v$schema.$upstream.<N+1> by hand to repackage."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch pinned archive
+        if: steps.version.outputs.skip == 'false'
+        run: scripts/sync-archive.sh fetch
+
+      - name: Verify full archive
+        if: steps.version.outputs.skip == 'false'
+        run: python3 -I scripts/verify.py --full
+
+      - name: Build tarball
+        if: steps.version.outputs.skip == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          name="harmony-device-db-$TAG"
+          generated=$(jq -r .generated archive.lock.json)
+          mkdir -p dist
+          # Deterministic tar: sorted, fixed mtime/owner, no atime/ctime.
+          tar --sort=name --mtime="$generated 00:00:00Z" \
+              --owner=0 --group=0 --numeric-owner \
+              --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
+              --transform "s,^,$name/," \
+              -cf - api/v1 archive.lock.json SOURCES.md LICENSE NOTICE \
+            | gzip -n -9 > "dist/$name.tar.gz"
+          cp archive.lock.json api/v1/manifest.json dist/
+          (cd dist && sha256sum -- * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Device DB ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            Harmony IR device database snapshot of
+            `pickysysadmin/logitech-harmony-ir-archive`, at the upstream tag and
+            commit recorded in `archive.lock.json`.
+
+            Extract with `tar xzf harmony-device-db-${{ steps.version.outputs.tag }}.tar.gz --strip-components=1`
+            to get `api/v1/`. Verify with `sha256sum -c SHA256SUMS.txt`.
+
+            Data licence: see SOURCES.md (CC0 for the archive's own work; the
+            underlying IR codes originate with Logitech).
+          files: |
+            dist/*.tar.gz
+            dist/archive.lock.json
+            dist/manifest.json
+            dist/SHA256SUMS.txt

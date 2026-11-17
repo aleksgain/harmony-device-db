@@ -1,0 +1,23 @@
+# Bulk archive data: fetched by scripts/sync-archive.sh fetch, shipped in the
+# release tarball, never committed (~340k files, ~0.8 GB).
+/api/v1/devices/
+/api/v1/codesets/
+/api/v1/protocols/
+
+# Build output
+/dist/
+*.tar.gz
+*.tar.zst
+SHA256SUMS*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

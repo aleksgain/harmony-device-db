@@ -1,0 +1,11 @@
+harmony-device-db
+Copyright 2026 Harmony Revival contributors
+
+This product includes software developed by the Harmony Revival project
+(https://github.com/harmony-revival).
+
+The device data distributed in release tarballs is derived from
+pickysysadmin/logitech-harmony-ir-archive (https://github.com/pickysysadmin/logitech-harmony-ir-archive).
+The archive author's contributions are dedicated under CC0 1.0 Universal.
+The underlying IR codes and protocol definitions originate with Logitech;
+their copyright status is not established. See SOURCES.md.

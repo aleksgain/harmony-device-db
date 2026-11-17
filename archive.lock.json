@@ -1,0 +1,23 @@
+{
+  "upstream": "pickysysadmin/logitech-harmony-ir-archive",
+  "tag": "20261110",
+  "commit": "ae45cc14836d32e9667497a975388a8d3c272c8d",
+  "tree": "f43e82098316a660cc88b6a6e1a44c2de8e98bfe",
+  "schemaVersion": 2,
+  "generated": "2026-11-10",
+  "counts": {
+    "codesets": 54610,
+    "commands": 13372379,
+    "commandsWithPronto": 13370071,
+    "devices": 278220,
+    "devicesWithCodes": 259439,
+    "devicesWithControl": 253150,
+    "devicesWithTiming": 278220,
+    "manufacturers": 7908,
+    "protocols": 684
+  },
+  "sha256": {
+    "manifest.json": "c70736cad53f24f83ba4bb8e5db1c029611fb9315679f30f752e0e9ac4d89b29",
+    "index.json": "e34b89425942089b2bfc18450a3e378fb3214edf7a1a156abb4644b4b45062f9"
+  }
+}
