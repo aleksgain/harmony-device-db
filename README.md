@@ -1,8 +1,8 @@
 # harmony-device-db
 
 A pinned, verified snapshot of the Logitech Harmony IR device database, packaged
-for [harmony-server](https://github.com/harmony-revival/harmony-server). Part of
-[Harmony Revival](https://github.com/harmony-revival).
+for [harmony-server](https://github.com/aleksgain/harmony-server). Part of
+[Harmony Revival](https://github.com/aleksgain/harmony-org).
 
 The data comes from
 [pickysysadmin/logitech-harmony-ir-archive](https://github.com/pickysysadmin/logitech-harmony-ir-archive).
@@ -29,7 +29,7 @@ against the pinned tree hash, which is a content hash of every file in it.
 Download the latest release tarball:
 
 ```sh
-gh release download --repo harmony-revival/harmony-device-db --pattern '*.tar.gz' --pattern SHA256SUMS.txt
+gh release download --repo aleksgain/harmony-device-db --pattern '*.tar.gz' --pattern SHA256SUMS.txt
 sha256sum -c --ignore-missing SHA256SUMS.txt
 tar xzf harmony-device-db-v*.tar.gz --strip-components=1   # creates api/v1/
 ```
